@@ -1,0 +1,46 @@
+TRACENEST - IMPLEMENTATION AND TESTING NOTES
+============================================
+
+APPLICATION FLOW
+- main.py creates a Tkinter window with five tabs: Overview, Processes,
+  File Activity, Network Ports and Alerts.
+- psutil reads CPU/RAM measurements, running process details and network
+  connection information from the local machine.
+- watchdog monitors the folder selected through the interface. A file
+  event handler puts changes into a thread-safe queue. The Tkinter main
+  thread reads that queue using root.after(300, ...) and updates its table.
+- database.py creates and queries the tracenest_alert_log SQLite table.
+- export_alerts.py reads stored alerts and writes a CSV file.
+
+IMPORTANT DESIGN CHOICES
+- Tkinter widgets are only updated on Tkinter's main thread. This is why
+  file events pass through queue.Queue, instead of being drawn directly
+  inside watchdog's callback.
+- GUI refreshes use root.after rather than a blocking while loop.
+- CPU >= 85% or RAM >= 90% triggers rule-based warnings. These are
+  configurable constants near the top of main.py, not machine learning.
+- The alert_active flags avoid writing repeated alerts every five seconds
+  while usage stays continuously above a threshold. They reset when the
+  measured value drops below the threshold.
+- Database connections are closed after each operation.
+- Process CPU percentages are normalized by logical CPU count.
+- File monitoring is limited to the folder selected in the interface.
+
+SUGGESTED MANUAL CHECKS (ON WINDOWS)
+[ ] Launch Run_TraceNest.bat and verify that all five tabs load.
+[ ] Open and close an application and refresh Processes.
+[ ] Search Processes using a name and a PID.
+[ ] Start monitoring a disposable test folder, then create, modify,
+    move and delete files in it; verify that the file events appear.
+[ ] Stop monitoring and confirm that new file activity no longer
+    arrives after the event queue has emptied.
+[ ] Refresh Ports and check that protocol and status are displayed.
+[ ] Refresh Alerts and export an alerts CSV; inspect its header.
+[ ] Close the application and reopen it to verify saved alert history.
+
+WHAT THESE TESTS DO NOT PROVE
+- Passing automated tests does not prove all Windows GUI interactions
+  work on every computer.
+- A network connection displayed in this app is not automatically a risk.
+- High resource usage does not prove malware or unauthorized activity.
+- No remote monitoring, malware removal, or learned prediction is implemented.

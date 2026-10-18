@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+tracenest.db
+*.csv
+build/
+dist/
+*.spec
